@@ -7,23 +7,28 @@ let button = document.getElementById('button');
 
 let clickSource = Observable.fromEvent(button, 'click');
 
+loadWithFetch(MOVIES_URL);
+
 clickSource
-    .flatMap(e => load(MOVIES_URL))
+    .flatMap(e => loadWithFetch(MOVIES_URL))
     .subscribe(renderMovies);
 
-function load(url: string) {
-  return Observable.create(observer => {
-    let xhr = new XMLHttpRequest();
+function loadWithFetch(url: string) {
+  return Observable.defer(() => {
+    return Observable.fromPromise(
+        fetch(url).then(res => res.json()));
 
-    xhr.addEventListener('load', () => {
-      let movies = JSON.parse(xhr.responseText);
-      observer.next(movies);
-      observer.complete();
-    });
+  }).retryWhen(retryStrategy({attempts: 4, delay: 1200}));
 
-    xhr.open('GET', url);
-    xhr.send();
-  });
+}
+
+function retryStrategy({attempts = 4, delay = 1000}) {
+  return function(errors) {
+    return errors
+        .scan(acc => acc + 1, 0)
+        .takeWhile(acc => acc < attempts)
+        .delay(delay);
+  }
 }
 
 function renderMovies(movies) {
