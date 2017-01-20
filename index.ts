@@ -1,34 +1,36 @@
 import {Observable} from 'rxjs';
 
-// Alternative syntax to import only necessary dependency
+const MOVIES_URL = 'movies.json';
 
-/*import {Observable} from 'rxjs/Observable';
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/filter';*/
+let output = document.getElementById('output');
+let button = document.getElementById('button');
 
-let numbers = [1,3,5];
-let source = Observable.create(function(observer) {
+let clickSource = Observable.fromEvent(button, 'click');
 
-  let index = 0;
-  let producer = () => {
-    if (index < numbers.length) {
-      observer.next(numbers[index++]);
+clickSource
+    .flatMap(e => load(MOVIES_URL))
+    .subscribe(renderMovies);
 
-      setTimeout(producer, 200);
+function load(url: string) {
+  return Observable.create(observer => {
+    let xhr = new XMLHttpRequest();
 
-    } else {
+    xhr.addEventListener('load', () => {
+      let movies = JSON.parse(xhr.responseText);
+      observer.next(movies);
       observer.complete();
-    }
-  };
+    });
 
-  producer();
-})
-    .map(n => n * 10)
-    .filter(n => n <= 30)
+    xhr.open('GET', url);
+    xhr.send();
+  });
+}
 
-source.subscribe({
-  next: v => console.log(`value is ${v}`),
-  error: e => console.log(`error is ${e}`),
-  complete: () => console.log('complete')
-});
+function renderMovies(movies) {
+  movies.forEach(movie => {
+    let div = document.createElement('div');
+    div.innerText = movie.title;
+    output.appendChild(div);
+  });
+}
 
