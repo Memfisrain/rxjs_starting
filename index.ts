@@ -1,5 +1,11 @@
 import {Observable} from 'rxjs';
 
+// Alternative syntax to import only necessary dependency
+
+/*import {Observable} from 'rxjs/Observable';
+import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/filter';*/
+
 let numbers = [1,3,5];
 let source = Observable.create(function(observer) {
 
