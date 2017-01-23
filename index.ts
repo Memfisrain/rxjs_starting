@@ -1,35 +1,19 @@
 import {Observable} from 'rxjs';
+import loadWithFetch from './loader';
 
-const MOVIES_URL = 'movies.json';
+const MOVIES_URL = 'movides.json';
 
 let output = document.getElementById('output');
 let button = document.getElementById('button');
 
 let clickSource = Observable.fromEvent(button, 'click');
 
-loadWithFetch(MOVIES_URL);
+loadWithFetch(MOVIES_URL)
+    .subscribe(renderMovies, loadErrorHandler);
 
 clickSource
     .flatMap(e => loadWithFetch(MOVIES_URL))
-    .subscribe(renderMovies);
-
-function loadWithFetch(url: string) {
-  return Observable.defer(() => {
-    return Observable.fromPromise(
-        fetch(url).then(res => res.json()));
-
-  }).retryWhen(retryStrategy({attempts: 4, delay: 1200}));
-
-}
-
-function retryStrategy({attempts = 4, delay = 1000}) {
-  return function(errors) {
-    return errors
-        .scan(acc => acc + 1, 0)
-        .takeWhile(acc => acc < attempts)
-        .delay(delay);
-  }
-}
+    .subscribe(renderMovies, loadErrorHandler);
 
 function renderMovies(movies) {
   movies.forEach(movie => {
@@ -37,5 +21,9 @@ function renderMovies(movies) {
     div.innerText = movie.title;
     output.appendChild(div);
   });
+}
+
+function loadErrorHandler(e) {
+  console.log(`Error is ${e}`)
 }
 
